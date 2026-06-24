@@ -1,9 +1,9 @@
 {
   "name": "dummyjson-api-tests",
   "version": "1.0.0",
-  "description": "Postman + Newman API checks for DummyJSON Auth and Carts flow",
+  "description": "API tests for DummyJSON Auth and Carts using Postman and Newman",
   "scripts": {
-    "test": "newman run "postman/API Tests - Auth and Carts.postman_collection.json" --env-var baseUrl=https://dummyjson.com --env-var username=emilys --env-var password=emilyspass --env-var invalidPassword=wrong_password --env-var notFoundCartId=999999 --reporters cli"
+    "test": "newman run \"postman/API Tests - Auth and Carts.postman_collection.json\" --env-var baseUrl=https://dummyjson.com --env-var username=emilys --env-var password=emilyspass --env-var invalidPassword=wrong_password --env-var notFoundCartId=999999 --reporters cli"
   },
   "devDependencies": {
     "newman": "^6.2.1"
