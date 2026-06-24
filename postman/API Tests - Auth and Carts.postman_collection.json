@@ -1,0 +1,827 @@
+{
+  "info": {
+    "_postman_id": "5575d39e-ceaa-40c4-beb3-766a04e6bbab",
+    "name": "API Tests - Auth and Carts",
+    "description": "Middle+/Senior QA style API checks for DummyJSON auth and carts flow. Designed for Postman and Newman.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "47254554",
+    "_collection_link": "https://go.postman.co/collection/47254554-5575d39e-ceaa-40c4-beb3-766a04e6bbab?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "Auth success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "(function () {",
+                  "    const data = pm.response.json();",
+                  "    ",
+                  "    pm.test('Статус код 200 при успешной регистрации', function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "    ",
+                  "    pm.test('В ответе есть id и token пользователя', function () {",
+                  "        pm.expect(data.id, 'id').to.be.a('number');",
+                  "        pm.expect(data.username, 'username').to.eql(pm.environment.get('username'));",
+                  "        pm.expect(data.email, 'email').to.be.a('string').and.to.include('@');",
+                  "        pm.expect(data.accessToken, 'accessToken').to.be.a('string').and.not.empty;",
+                  "        pm.expect(data.refreshToken, 'refreshToken').to.be.a('string').and.not.empty;",
+                  "    });",
+                  "    ",
+                  "    if (pm.response.code === 200 && data.accessToken) {",
+                  "        pm.environment.set('accessToken', data.accessToken);",
+                  "        pm.environment.set('refreshToken', data.refreshToken);",
+                  "        pm.environment.set('userId', String(data.id));",
+                  "    }",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"expiresInMins\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "(function () {",
+                  "    let data = {};",
+                  "    try { data = pm.response.json(); } catch (e) { data = {}; }",
+                  "    ",
+                  "    pm.test('Введены невалидные реквизиты для входа', function () {",
+                  "        pm.expect([400, 401], 'status code').to.include(pm.response.code);",
+                  "    });",
+                  "    ",
+                  "    pm.test('В ответе об ошибке токены аутентификации не отображаются', function () {",
+                  "        pm.expect(data.accessToken, 'accessToken').to.be.undefined;",
+                  "        pm.expect(data.refreshToken, 'refreshToken').to.be.undefined;",
+                  "        pm.expect(data.message || data.error || '', 'error message').to.not.eql('');",
+                  "    });",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{invalidPassword}}\",\n  \"expiresInMins\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Wrong username",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Поле username пустое\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 401, 422]);",
+                  "});",
+                  "//по аналогии можно сделать с паролем, битым токеном и тд",
+                  "pm.test(\"Ответ должен содержать accessToken\", function () {",
+                  "    const json = pm.response.json();",
+                  "",
+                  "    pm.expect(json).to.not.have.property(\"accessToken\");",
+                  "    pm.expect(json).to.not.have.property(\"refreshToken\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Have bearer token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Статус код 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"У текущего пользователя есть ожидаемые условия\", function () {",
+                  "    const json = pm.response.json();",
+                  "",
+                  "    pm.expect(json).to.have.property(\"id\");",
+                  "    pm.expect(json).to.have.property(\"username\");",
+                  "    pm.expect(json).to.have.property(\"email\");",
+                  "",
+                  "    pm.expect(json.id).to.be.a(\"number\");",
+                  "    pm.expect(json.username).to.be.a(\"string\");",
+                  "    pm.expect(json.email).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.test(\"Id пользователя из авторизации совпадает с id, вошедшего пользователя\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const expectedUserId = Number(pm.environment.get(\"userId\"));",
+                  "",
+                  "    pm.expect(json.id).to.eql(expectedUserId);",
+                  "});",
+                  "",
+                  "pm.test(\"Ответ не содержит пароль\", function () {",
+                  "    const json = pm.response.json();",
+                  "",
+                  "    pm.expect(json).to.not.have.property(\"password\");",
+                  "}); //тест не проходит из-за этой API. Запрос возвращает поле пароля в ответе, хотя ожидаемое поведение — не возвращать такие чувствительнрые данные в клиентский ответ. Баг"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Don't have bearer token",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "(function () {",
+                  "    pm.request.headers.remove('Authorization');",
+                  "    const baseUrl = pm.environment.get('baseUrl');",
+                  "    pm.cookies.jar().clear(baseUrl, function (error) {",
+                  "        if (error) { console.warn('Cookie jar was not cleared:', error); }",
+                  "    });",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "(function () { //куки предварительно надо почистить, тогда тесты проходят",
+                  "    let data = {};",
+                  "    try { data = pm.response.json(); } catch (e) { data = {}; }",
+                  "    ",
+                  "    pm.test('Неаутентифицированный запрос отклонен', function () {",
+                  "        pm.expect([401, 403], 'status code').to.include(pm.response.code);",
+                  "    });",
+                  "    ",
+                  "    pm.test('В ответе об ошибке содержится понятное сообщение', function () {",
+                  "        pm.expect(data.message || data.error || '', 'error message').to.not.eql('');",
+                  "    });",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Carts",
+      "item": [
+        {
+          "name": "User carts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "(function () {",
+                  "    const data = pm.response.json();",
+                  "    const expectedUserId = Number(pm.environment.get('userId'));",
+                  "    ",
+                  "    pm.test('Статус код 200 при получении cart', function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "    ",
+                  "    pm.test('Ответ содержит метаданные коллекции корзин', function () {",
+                  "        pm.expect(data.carts, 'carts').to.be.an('array');",
+                  "        pm.expect(data.total, 'total').to.be.a('number');",
+                  "        pm.expect(data.skip, 'skip').to.be.a('number');",
+                  "        pm.expect(data.limit, 'limit').to.be.a('number');",
+                  "    });",
+                  "    ",
+                  "    pm.test('Каждый возвращенный товар принадлежит запрошенному пользователю', function () {",
+                  "        data.carts.forEach(cart => pm.expect(cart.userId, `cart ${cart.id} userId`).to.eql(expectedUserId));",
+                  "    });",
+                  "    ",
+                  "    if (Array.isArray(data.carts) && data.carts.length > 0) {",
+                  "        pm.environment.set('cartId', String(data.carts[0].id));",
+                  "    }",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carts/user/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "user",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User carts by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "(function () {",
+                  "    const data = pm.response.json();",
+                  "    const expectedCartId = Number(pm.environment.get('cartId'));",
+                  "    ",
+                  "    pm.test('Статус код 200 при получении id cart', function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "    ",
+                  "    pm.test('Ответ содержит нормальную модель корзины', function () {",
+                  "        pm.expect(data.id, 'id').to.eql(expectedCartId);",
+                  "        pm.expect(data.products, 'products').to.be.an('array').and.not.empty;",
+                  "        pm.expect(data.total, 'total').to.be.a('number');",
+                  "        pm.expect(data.discountedTotal, 'discountedTotal').to.be.a('number');",
+                  "        pm.expect(data.totalProducts, 'totalProducts').to.eql(data.products.length);",
+                  "        pm.expect(data.totalQuantity, 'totalQuantity').to.be.a('number').and.above(0);",
+                  "    });",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carts/{{cartId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "{{cartId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "(function () {",
+                  "    const data = pm.response.json();",
+                  "    const expectedUserId = Number(pm.environment.get('userId'));",
+                  "    ",
+                  "    pm.test('Статус код 201 при создании cart', function () {",
+                  "        pm.response.to.have.status(201); //можно прописать или добавить 200, но логичнее будто 201",
+                  "    });",
+                  "    ",
+                  "    pm.test('В созданной корзине содержатся рассчитанные итоговые суммы', function () {",
+                  "        pm.expect(data.id, 'id').to.be.a('number');",
+                  "        pm.expect(data.userId, 'userId').to.eql(expectedUserId);",
+                  "        pm.expect(data.products, 'products').to.be.an('array').with.lengthOf(2);",
+                  "        pm.expect(data.totalProducts, 'totalProducts').to.eql(2);",
+                  "        pm.expect(data.totalQuantity, 'totalQuantity').to.eql(3);",
+                  "        pm.expect(data.total, 'total').to.be.a('number').and.above(0);",
+                  "        pm.expect(data.discountedTotal, 'discountedTotal').to.be.a('number').and.above(0);",
+                  "    });",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"products\": [\n    {\n      \"id\": 1,\n      \"quantity\": 2\n    },\n    {\n      \"id\": 2,\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carts/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "add"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "(function () {",
+                  "    const data = pm.response.json();",
+                  "    const expectedCartId = Number(pm.environment.get('cartId'));",
+                  "    ",
+                  "    pm.test('Статус код 200 при обновлении cart', function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "    ",
+                  "    pm.test('Корзина обновлена ​​товаром по запросу', function () {",
+                  "        pm.expect(data.id, 'id').to.eql(expectedCartId);",
+                  "        pm.expect(data.products, 'products').to.be.an('array').and.not.empty;",
+                  "        const updatedProduct = data.products.find(product => product.id === 1);",
+                  "        pm.expect(updatedProduct, 'updated product id=1').to.not.be.undefined;",
+                  "        pm.expect(updatedProduct.quantity, 'quantity').to.eql(1);",
+                  "        pm.expect(data.totalQuantity, 'totalQuantity').to.be.a('number').and.above(0);",
+                  "    });",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merge\": true,\n  \"products\": [\n    {\n      \"id\": 1,\n      \"quantity\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carts/{{cartId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "{{cartId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "(function () {",
+                  "    const data = pm.response.json();",
+                  "    const expectedCartId = Number(pm.environment.get('cartId'));",
+                  "    ",
+                  "    pm.test('Статус код 200 при удалении сущности cart', function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "    ",
+                  "    pm.test('Корзина удалена', function () {",
+                  "        pm.expect(data.id, 'id').to.eql(expectedCartId);",
+                  "        pm.expect(data.isDeleted, 'isDeleted').to.eql(true);",
+                  "        pm.expect(data.deletedOn, 'deletedOn').to.be.a('string').and.not.empty;",
+                  "    });",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/carts/{{cartId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "{{cartId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Negative Carts",
+      "item": [
+        {
+          "name": "Zero quantity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Нулевое количество отклоняется\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                  "}); "
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"products\": [\n    {\n      \"id\": 1,\n      \"quantity\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carts/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "add"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Wrong quantity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "(function () {",
+                  "    let data = {};",
+                  "    try { data = pm.response.json(); } catch (e) { data = {}; }",
+                  "",
+                  "    pm.test(\"Общая сумма в корзине соответствует общей сумме за товары\", function () {",
+                  "    const json = pm.response.json();",
+                  "",
+                  "    const productsTotal = json.products.reduce((sum, product) => {",
+                  "        return sum + product.total;",
+                  "    }, 0);",
+                  "",
+                  "    pm.expect(json.total).to.eql(productsTotal);",
+                  "});",
+                  "    ",
+                  "    pm.test('API должен отклонять отрицательное количество продукта', function () {",
+                  "        // здесь можно было бы завести баг, но так как это публичный АПИ, то это особенность мок сервера (ограничения)",
+                  "        pm.expect([400, 422], 'status code').to.include(pm.response.code);",
+                  "    });",
+                  "    ",
+                  "    pm.test('Ошибка валидации должна быть указана явно', function () {",
+                  "        if ([400, 422].includes(pm.response.code)) {",
+                  "            pm.expect(data.message || data.error || '', 'error message').to.not.eql('');",
+                  "        } ",
+                  "    });",
+                  "})();"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"products\": [\n    {\n      \"id\": 1,\n      \"quantity\": -1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carts/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "add"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rejected cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"При отсутствии корзины должна возвращаться ошибка 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Сообщение об ошибке выражено явно\", function () {",
+                  "    const json = pm.response.json();",
+                  "",
+                  "    pm.expect(json.message).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carts/{{notFoundCartId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "{{notFoundCartId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Wrong userid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Недопустимый тип userId должен быть отклонен\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                  "});",
+                  "",
+                  "pm.test(\"API не должен возвращать код ошибки 500\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(500);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"abc\",\n  \"products\": [\n    {\n      \"id\": 1,\n      \"quantity\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/carts/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "add"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": "1"
+    },
+    {
+      "key": "cartId",
+      "value": "1"
+    }
+  ]
+}
